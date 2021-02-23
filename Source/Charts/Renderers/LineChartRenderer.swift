@@ -283,7 +283,7 @@ open class LineChartRenderer: LineRadarRenderer
         }
     }
     
-    private var _lineSegments = [CGPoint](repeating: CGPoint(), count: 2)
+    public var _lineSegments = [CGPoint](repeating: CGPoint(), count: 2)
     
     @objc open func drawLinear(context: CGContext, dataSet: ILineChartDataSet)
     {
