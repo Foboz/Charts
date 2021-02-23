@@ -789,10 +789,10 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
                     _decelerationDisplayLink.add(to: RunLoop.main, forMode: RunLoop.Mode.common)
                 }
                 
-                _isDragging = false
-                
-                delegate?.chartViewDidEndPanning?(self)
+                _isDragging = false    
             }
+          
+            delegate?.chartViewDidEndPanning?(self)
             
             if _outerScrollView !== nil
             {
