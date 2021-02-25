@@ -234,6 +234,8 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         // make sure the data cannot be drawn outside the content-rect
         if clipDataToContentEnabled {
             context.clip(to: _viewPortHandler.contentRect)
+        } else {
+            context.clip(to: CGRect(x: 0.0, y: _viewPortHandler.contentTop, width: _viewPortHandler.chartWidth, height: _viewPortHandler.contentHeight))
         }
         renderer.drawData(context: context)
         
