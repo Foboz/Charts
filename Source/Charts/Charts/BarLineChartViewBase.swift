@@ -134,8 +134,7 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         _longPressGestureRecognizer.delegate = self
         _longPressGestureRecognizer.minimumPressDuration = 0.2
         _longPressGestureRecognizer.allowableMovement = .greatestFiniteMagnitude
-        _longPressGestureRecognizer.numberOfTouches = 1
-        _longPressGestureRecognizer.numberOfTapsRequired = 1
+        _longPressGestureRecognizer.numberOfTapsRequired = 0
       
         _longPressGestureRecognizer.require(toFail: _panGestureRecognizer)
         _panGestureRecognizer.require(toFail: _longPressGestureRecognizer)
