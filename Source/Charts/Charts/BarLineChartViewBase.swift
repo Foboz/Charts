@@ -133,9 +133,10 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         _longPressGestureRecognizer = NSUILongPressGestureRecognizer(target: self, action: #selector(longPressGestureRecognized(_:)))
         _longPressGestureRecognizer.delegate = self
         _longPressGestureRecognizer.minimumPressDuration = 0.2
+        _longPressGestureRecognizer.allowableMovement = .greatestFiniteMagnitude
       
-      _longPressGestureRecognizer.require(toFail: _panGestureRecognizer)
-      _panGestureRecognizer.require(toFail: _longPressGestureRecognizer)
+        _longPressGestureRecognizer.require(toFail: _panGestureRecognizer)
+        _panGestureRecognizer.require(toFail: _longPressGestureRecognizer)
         
         self.addGestureRecognizer(_tapGestureRecognizer)
         self.addGestureRecognizer(_doubleTapGestureRecognizer)
