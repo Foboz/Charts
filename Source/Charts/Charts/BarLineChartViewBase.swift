@@ -95,6 +95,7 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
     public var _pinchGestureRecognizer: NSUIPinchGestureRecognizer!
     #endif
     public var _panGestureRecognizer: NSUIPanGestureRecognizer!
+    public var _longPressGestureRecognizer: NSUILongPressGestureRecognizer!
     
     /// flag that indicates if a custom viewport offset has been set
     private var _customViewPortEnabled = false
@@ -127,8 +128,10 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         _doubleTapGestureRecognizer = NSUITapGestureRecognizer(target: self, action: #selector(doubleTapGestureRecognized(_:)))
         _doubleTapGestureRecognizer.nsuiNumberOfTapsRequired = 2
         _panGestureRecognizer = NSUIPanGestureRecognizer(target: self, action: #selector(panGestureRecognized(_:)))
-        
         _panGestureRecognizer.delegate = self
+      
+        _longPressGestureRecognizer = NSUILongPressGestureRecognizer(target: self, action: #selector(longPressGestureRecognized(_:)))
+        _longPressGestureRecognizer.delegate = self
         
         self.addGestureRecognizer(_tapGestureRecognizer)
         self.addGestureRecognizer(_doubleTapGestureRecognizer)
@@ -136,6 +139,7 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         
         _doubleTapGestureRecognizer.isEnabled = _doubleTapToZoomEnabled
         _panGestureRecognizer.isEnabled = _dragXEnabled || _dragYEnabled
+        _longPressGestureRecognizer.isEnabled = _dragXEnabled || _dragYEnabled
 
         #if !os(tvOS)
         _pinchGestureRecognizer = NSUIPinchGestureRecognizer(target: self, action: #selector(BarLineChartViewBase.pinchGestureRecognized(_:)))
@@ -814,6 +818,116 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
             }
         }
     }
+  
+    @objc private func longPressGestureRecognized(_ recognizer: NSUILongPressGestureRecognizer)
+    {
+        if recognizer.state == NSUIGestureRecognizerState.began && recognizer.nsuiNumberOfTouches() > 0
+        {
+            stopDeceleration()
+            
+            if _data === nil || !self.isDragEnabled
+            { // If we have no data, we have nothing to pan and no data to highlight
+                return
+            }
+            
+            // If drag is enabled and we are in a position where there's something to drag:
+            //  * If we're zoomed in, then obviously we have something to drag.
+            //  * If we have a drag offset - we always have something to drag
+            if !self.hasNoDragOffset || !self.isFullyZoomedOut
+            {
+                _isDragging = true
+                
+                _closestDataSetToTouch = getDataSetByTouchPoint(point: recognizer.nsuiLocationOfTouch(0, inView: self))
+                
+                let didUserDrag = true
+                
+                // Check to see if user dragged at all and if so, can the chart be dragged by the given amount
+                if didUserDrag
+                {
+                    if _outerScrollView !== nil
+                    {
+                        // We can stop dragging right now, and let the scroll view take control
+                        _outerScrollView = nil
+                        _isDragging = false
+                    }
+                }
+                else
+                {
+                    if _outerScrollView !== nil
+                    {
+                        // Prevent the parent scroll view from scrolling
+                        _outerScrollView?.nsuiIsScrollEnabled = false
+                    }
+                }
+                
+                _lastPanPoint = recognizer.location(in: self)
+            }
+            else if self.isHighlightPerDragEnabled
+            {
+                // We will only handle highlights on NSUIGestureRecognizerState.Changed
+                
+                _isDragging = false
+              
+                let h = getHighlightByTouchPoint(recognizer.location(in: self))
+                
+                let lastHighlighted = self.lastHighlighted
+                
+                if h != lastHighlighted
+                {
+                    self.lastHighlighted = h
+                    self.highlightValue(h, callDelegate: true)
+                }
+            }
+        }
+        else if recognizer.state == NSUIGestureRecognizerState.changed
+        {
+            if _isDragging
+            {
+                let originalTranslation = recognizer.location(in: self)
+                var translation = CGPoint(x: originalTranslation.x - _lastPanPoint.x, y: originalTranslation.y - _lastPanPoint.y)
+                
+                if !self.dragXEnabled
+                {
+                    translation.x = 0.0
+                }
+                else if !self.dragYEnabled
+                {
+                    translation.y = 0.0
+                }
+                
+                let _ = performPanChange(translation: translation)
+                
+                _lastPanPoint = originalTranslation
+            }
+            else if isHighlightPerDragEnabled
+            {
+                let h = getHighlightByTouchPoint(recognizer.location(in: self))
+                
+                let lastHighlighted = self.lastHighlighted
+                
+                if h != lastHighlighted
+                {
+                    self.lastHighlighted = h
+                    self.highlightValue(h, callDelegate: true)
+                }
+            }
+        }
+        else if recognizer.state == NSUIGestureRecognizerState.ended || recognizer.state == NSUIGestureRecognizerState.cancelled
+        {
+            if _isDragging
+            {
+                _isDragging = false
+            }
+          
+            delegate?.chartViewDidEndPanning?(self)
+            
+            if _outerScrollView !== nil
+            {
+                _outerScrollView?.nsuiIsScrollEnabled = true
+                _outerScrollView = nil
+            }
+        }
+    }
     
     private func performPanChange(translation: CGPoint) -> Bool
     {
@@ -909,6 +1023,13 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
                 return false
             }
         }
+        else if gestureRecognizer == _longPressGestureRecognizer {
+          if _data === nil || !isDragEnabled ||
+              (self.hasNoDragOffset && self.isFullyZoomedOut && !self.isHighlightPerDragEnabled)
+          {
+              return false
+          }
+        }
         else
         {
             #if !os(tvOS)
@@ -953,6 +1074,14 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
             return true
         }
         #endif
+      
+        if gestureRecognizer is NSUIPanGestureRecognizer,
+           otherGestureRecognizer is NSUILongPressGestureRecognizer {
+          return false
+        } else if gestureRecognizer is NSUILongPressGestureRecognizer,
+                  otherGestureRecognizer is NSUIPanGestureRecognizer {
+          return false
+        }
         
         if gestureRecognizer is NSUIPanGestureRecognizer,
             otherGestureRecognizer is NSUIPanGestureRecognizer,
