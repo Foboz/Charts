@@ -89,12 +89,12 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
     /// **default**: An instance of XAxisRenderer
     @objc open lazy var xAxisRenderer = XAxisRenderer(viewPortHandler: _viewPortHandler, xAxis: _xAxis, transformer: _leftAxisTransformer)
     
-    internal var _tapGestureRecognizer: NSUITapGestureRecognizer!
-    internal var _doubleTapGestureRecognizer: NSUITapGestureRecognizer!
+    public var _tapGestureRecognizer: NSUITapGestureRecognizer!
+    public var _doubleTapGestureRecognizer: NSUITapGestureRecognizer!
     #if !os(tvOS)
-    internal var _pinchGestureRecognizer: NSUIPinchGestureRecognizer!
+    public var _pinchGestureRecognizer: NSUIPinchGestureRecognizer!
     #endif
-    internal var _panGestureRecognizer: NSUIPanGestureRecognizer!
+    public var _panGestureRecognizer: NSUIPanGestureRecognizer!
     
     /// flag that indicates if a custom viewport offset has been set
     private var _customViewPortEnabled = false
