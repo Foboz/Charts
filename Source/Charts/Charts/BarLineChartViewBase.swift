@@ -872,10 +872,7 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
                 
                 _isDragging = false
               
-                var location = recognizer.location(in: self)
-                location.y = self.frame.height / 2.0
-              
-                let h = getHighlightByTouchPoint(location)
+                let h = getHighlightByTouchPoint(recognizer.location(in: self))
                 
                 let lastHighlighted = self.lastHighlighted
                 
@@ -908,7 +905,10 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
             }
             else if isHighlightPerDragEnabled
             {
-                let h = getHighlightByTouchPoint(recognizer.location(in: self))
+                var location = recognizer.location(in: self)
+                location.y = self.frame.height / 2.0
+            
+                let h = getHighlightByTouchPoint(location)
                 
                 let lastHighlighted = self.lastHighlighted
                 
