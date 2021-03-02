@@ -1083,7 +1083,7 @@ open class BarLineChartViewBase: ChartViewBase, BarLineScatterCandleBubbleChartD
         #endif
       
         if ((gestureRecognizer == _panGestureRecognizer && otherGestureRecognizer == _longPressGestureRecognizer) ||
-            (gestureRecognizer == _longPressGestureRecognizer && otherGestureRecognizer == _panGestureRecognizer)) {
+            (gestureRecognizer == _longPressGestureRecognizer && otherGestureRecognizer is NSUIPanGestureRecognizer)) {
           return false
         }
         
